@@ -34,7 +34,7 @@ jobs:
         run: make bento-build
 
       - name: Archive Bento Build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: iris-classifier-bento
           path: ~/bentoml/bentos/iris_classifier/latest
