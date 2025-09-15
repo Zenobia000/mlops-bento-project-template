@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init:*)",
+      "Bash(bentoml serve:*)",
+      "Bash(bentoml models:*)",
+      "Bash(bentoml:*)",
+      "Bash(timeout:*)",
+      "Bash(python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

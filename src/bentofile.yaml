@@ -1,0 +1,13 @@
+service: "service.py:svc"
+description: "Iris flower classification service"
+labels:
+  owner: mlops-team
+  project: iris-classification
+include:
+  - "*.py"
+python:
+  packages:
+    - scikit-learn
+    - numpy
+models:
+  - iris_clf:latest
