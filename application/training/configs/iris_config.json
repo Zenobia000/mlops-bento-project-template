@@ -1,0 +1,16 @@
+{
+  "model": {
+    "n_estimators": 150,
+    "max_depth": 10,
+    "min_samples_split": 2,
+    "min_samples_leaf": 1,
+    "random_state": 42
+  },
+  "data": {
+    "test_size": 0.2,
+    "random_state": 42
+  },
+  "experiment_name": "iris_production_pipeline",
+  "model_name": "iris_rf_classifier",
+  "version": "1.0.0"
+}

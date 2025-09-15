@@ -1,0 +1,137 @@
+[tool.poetry]
+name = "mlops-template"
+version = "0.1.0"
+description = "MLOps template with GPU support for PyTorch, TensorFlow, and Hugging Face"
+authors = ["MLOps Team <team@example.com>"]
+readme = "README.md"
+packages = [{include = "shared"}, {include = "domain"}, {include = "application"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+# Core dependencies
+wheel = "^0.37.1"
+click = "^8.1.3"
+
+# Development and DevOps
+black = "^22.3.0"
+pytest = "^7.1.3"
+pytest-cov = "^4.0.0"
+pylint = "^2.15.3"
+boto3 = "^1.24.87"
+
+# Web frameworks
+fastapi = "^0.85.0"
+uvicorn = "^0.18.3"
+
+# Data science and ML
+notebook = "^6.4.12"
+jupyterlab = "^3.4.0"
+pandas = "^1.5.0"
+numpy = "^1.23.3"
+scikit-learn = "^1.1.2"
+matplotlib = "^3.6.0"
+seaborn = "^0.12.0"
+dask = "^2022.9.2"
+
+# Geographic
+geopy = "^2.2.0"
+
+# MLOps tools
+gradio = "^3.4.1"
+streamlit = "^1.13.0"
+protobuf = "^3.16.0"
+onnx = "^1.12.0"
+mlflow = "^2.0.1"
+bentoml = "^1.0.0"
+
+# MLOps - Databricks (optional)
+databricks = {version = "^0.2", optional = true}
+databricks-cli = {version = "^0.17.3", optional = true}
+databricks-sql-connector = {version = "^2.1.0", optional = true}
+
+# Hugging Face
+transformers = "^4.22.2"
+sentencepiece = "^0.1.97"
+datasets = "^2.5.2"
+tokenizers = "^0.12.1"
+
+# Deep learning frameworks
+torch = {version = "^1.12.0", optional = true}
+torchvision = {version = "^0.13.0", optional = true}
+tensorflow = {version = "^2.10.0", optional = true}
+
+# Other ML tools
+yake = "^0.4.8"
+
+[tool.poetry.extras]
+torch = ["torch", "torchvision"]
+tensorflow = ["tensorflow"]
+databricks = ["databricks", "databricks-cli", "databricks-sql-connector"]
+all = ["torch", "torchvision", "tensorflow", "databricks", "databricks-cli", "databricks-sql-connector"]
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.3.0"
+pylint = "^2.15.3"
+pytest = "^7.1.3"
+pytest-cov = "^4.0.0"
+jupyter = "^1.0.0"
+
+[tool.poetry.group.gpu.dependencies]
+# GPU-specific dependencies will be installed separately
+# due to platform-specific requirements
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.pylint.messages_control]
+disable = "C0330, C0326"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers --cov=shared --cov=domain --cov=application"
+testpaths = [
+    "tests",
+]
+python_files = [
+    "test_*.py",
+    "*_test.py",
+]
+
+[tool.coverage.run]
+source = ["shared", "domain", "application"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+]

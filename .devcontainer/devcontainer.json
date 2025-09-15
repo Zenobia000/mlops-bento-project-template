@@ -1,8 +1,5 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/codespaces-linux
 {
-	"name": "GitHub Codespaces (Default)",
-
+	"name": "MLOps Template with Poetry",
 	"build": {
 		"dockerfile": "Dockerfile",
 		"context": ".."
@@ -11,71 +8,75 @@
 		"ghcr.io/devcontainers/features/nvidia-cuda:1": {
 			"installCudnn": true
 		},
-		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {}
-	  },
-
-	// Configure tool-specific properties.
+		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+		"ghcr.io/devcontainers/features/python:1": {
+			"version": "3.9",
+			"installTools": true
+		}
+	},
 	"customizations": {
-		// Configure properties specific to VS Code.
 		"vscode": {
-			// Set *default* container specific settings.json values on container create.
-			"settings": { 
-				"go.toolsManagement.checkForUpdates": "local",
-				"go.useLanguageServer": true,
-				"go.gopath": "/go",
-				"python.defaultInterpreterPath": "/home/codespace/venv/bin/python",
+			"settings": {
+				"python.defaultInterpreterPath": "/usr/local/bin/python",
 				"python.linting.enabled": true,
 				"python.linting.pylintEnabled": true,
-				"python.formatting.autopep8Path": "/home/codespace/venv/bin/autopep8",
-				"python.formatting.blackPath": "/home/codespace/venv/bin/black",
-				"python.formatting.yapfPath": "/home/codespace/venv/bin/yapf",
-				"python.linting.banditPath": "/home/codespace/venv/bin/bandit",
-				"python.linting.flake8Path": "/home/codespace/venv/bin/flake8",
-				"python.linting.mypyPath": "/home/codespace/venv/bin/mypy",
-				"python.linting.pycodestylePath": "/home/codespace/venv/bin/pycodestyle",
-				"python.linting.pydocstylePath": "/home/codespace/venv/bin/pydocstyle",
-				"python.linting.pylintPath": "/home/codespace/venv/bin/pylint",
-				"lldb.executable": "/usr/bin/lldb",
+				"python.formatting.provider": "black",
+				"python.testing.pytestEnabled": true,
+				"python.terminal.activateEnvironment": true,
 				"files.watcherExclude": {
-					"**/target/**": true
-				}
+					"**/target/**": true,
+					"**/.venv/**": true,
+					"**/dist/**": true,
+					"**/.pytest_cache/**": true,
+					"**/__pycache__/**": true
+				},
+				"python.analysis.extraPaths": [
+					"./shared",
+					"./domain",
+					"./application"
+				]
 			},
-			
-			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
-				"GitHub.vscode-pull-request-github",
-				"GitHub.copilot-nightly",
-				"GitHub.copilot-labs",
-				"ms-azuretools.vscode-docker",
+				"ms-python.python",
+				"ms-python.vscode-pylance",
 				"ms-toolsai.jupyter",
 				"ms-toolsai.jupyter-keymap",
 				"ms-toolsai.jupyter-renderers",
-				"ms-python.vscode-pylance",
-				"ms-python.python",
-				"ms-vscode.makefile-tools"
+				"GitHub.copilot",
+				"GitHub.copilot-chat",
+				"ms-azuretools.vscode-docker",
+				"ms-vscode.makefile-tools",
+				"ms-python.black-formatter",
+				"ms-python.pylint"
 			]
 		}
 	},
-
 	"remoteUser": "codespace",
-
 	"overrideCommand": false,
-
-	"mounts": ["source=codespaces-linux-var-lib-docker,target=/var/lib/docker,type=volume"],
-
+	"mounts": [
+		"source=codespaces-linux-var-lib-docker,target=/var/lib/docker,type=volume"
+	],
 	"runArgs": [
 		"--cap-add=SYS_PTRACE",
 		"--security-opt",
 		"seccomp=unconfined",
 		"--privileged",
-		"--init",
-		//"--gpus", "all"
+		"--init"
 	],
-	
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// "oryx build" will automatically install your dependencies and attempt to build your project
-	//"postCreateCommand": "oryx build -p virtualenv_name=.venv --log-file /tmp/oryx-build.log --manifest-dir /tmp || echo 'Could not auto-build. Skipping.'"
-	 "postCreateCommand": "bash setup.sh"
+	"postCreateCommand": "bash scripts/setup/setup_poetry.sh",
+	"forwardPorts": [3000, 8000, 8888],
+	"portsAttributes": {
+		"3000": {
+			"label": "BentoML Service",
+			"onAutoForward": "notify"
+		},
+		"8000": {
+			"label": "FastAPI Service",
+			"onAutoForward": "notify"
+		},
+		"8888": {
+			"label": "Jupyter Lab",
+			"onAutoForward": "notify"
+		}
+	}
 }

@@ -1,127 +1,326 @@
-## 🎓 Pragmatic AI Labs | Join 1M+ ML Engineers
+# 🚀 MLOps Template - 完整的機器學習運維系統
 
-### 🔥 Hot Course Offers:
-* 🤖 [Master GenAI Engineering](https://ds500.paiml.com/learn/course/0bbb5/) - Build Production AI Systems
-* 🦀 [Learn Professional Rust](https://ds500.paiml.com/learn/course/g6u1k/) - Industry-Grade Development
-* 📊 [AWS AI & Analytics](https://ds500.paiml.com/learn/course/31si1/) - Scale Your ML in Cloud
-* ⚡ [Production GenAI on AWS](https://ds500.paiml.com/learn/course/ehks1/) - Deploy at Enterprise Scale
-* 🛠️ [Rust DevOps Mastery](https://ds500.paiml.com/learn/course/ex8eu/) - Automate Everything
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Poetry](https://img.shields.io/badge/dependency-poetry-blue.svg)](https://python-poetry.org/)
+[![BentoML](https://img.shields.io/badge/serving-bentoml-green.svg)](https://bentoml.org/)
+[![Docker](https://img.shields.io/badge/container-docker-blue.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-### 🚀 Level Up Your Career:
-* 💼 [Production ML Program](https://paiml.com) - Complete MLOps & Cloud Mastery
-* 🎯 [Start Learning Now](https://ds500.paiml.com) - Fast-Track Your ML Career
-* 🏢 Trusted by Fortune 500 Teams
+> **企業級 MLOps 範本**：從實驗到生產的完整機器學習生命週期管理系統
 
-Learn end-to-end ML engineering from industry veterans at [PAIML.COM](https://paiml.com)
+## 🎯 專案特色
 
+- 🏗️ **系統架構分層** - Domain/Application/Infrastructure 清晰分離
+- 📦 **Poetry 依賴管理** - 精確版本控制，告別依賴地獄
+- 🤖 **多框架支援** - scikit-learn、PyTorch、TensorFlow、Hugging Face
+- 🚀 **一鍵自動化** - 從訓練到部署的完整流水線
+- 📊 **企業級監控** - Prometheus + Grafana + 自定義指標
+- ☁️ **多雲支援** - AWS、GCP、Azure 部署配置
+- 🧪 **完整測試** - 單元測試、整合測試、負載測試
+- 📖 **詳細文檔** - 完整教學和 API 文檔
 
-[![CI](https://github.com/nogibjj/mlops-template/actions/workflows/cicd.yml/badge.svg?branch=GPU)](https://github.com/nogibjj/mlops-template/actions/workflows/cicd.yml)
-[![Codespaces Prebuilds](https://github.com/nogibjj/mlops-template/actions/workflows/codespaces/create_codespaces_prebuilds/badge.svg?branch=GPU)](https://github.com/nogibjj/mlops-template/actions/workflows/codespaces/create_codespaces_prebuilds)
+## 🚀 快速開始
 
-## Template for MLOPs projects with GPU
-
-**CONDA IS NOT NEEDED AS A PACKAGE MANAGER.  All setup is done using the Python Software Foundation recommended tools:  virtualenv and pip and mainstream production tools Docker.  Please see [PEP 453](https://peps.python.org/pep-0453/) "officially recommend the use of pip as the default installer for Python packages"**
-
-*GitHub Codespaces are FREE for education and as are GPU Codespaces as of this writing in December 2022*
-
-1. First thing to do on launch is to open a new shell and verify virtualenv is sourced.
-
-Things included are:
-
-* `Makefile`
-
-* `Pytest`
-
-* `pandas`
-
-* `Pylint` or `ruff`
-
-* `Dockerfile`
-
-* `GitHub copilot`
-
-* `jupyter` and `ipython` 
-
-* Most common Python libraries for ML/DL and Hugging Face
-
-* `githubactions` 
-
-## Two fun tools to explore:
-
-* Zero-shot classification:  ./hugging-face/zero_shot_classification.py classify
-* Yake for candidate label creation: ./utils/kw_extract.py
-
-## Try out Bento
-
-* [tutorial bento](https://docs.bentoml.org/en/latest/tutorial.html)
-
-`docker run -it --rm -p 8888:8888 -p 3000:3000 -p 3001:3001 bentoml/quickstart:latest`
-
-### Verify GPU works
-
-The following examples test out the GPU (including Docker GPU)
-
-* run pytorch training test: `python utils/quickstart_pytorch.py`
-* run pytorch CUDA test: `python utils/verify_cuda_pytorch.py`
-* run tensorflow training test: `python utils/quickstart_tf2.py`
-* run nvidia monitoring test: `nvidia-smi -l 1` it should show a GPU
-* run whisper transcribe test `./utils/transcribe-whisper.sh` and verify GPU is working with `nvidia-smi -l 1`
-* run `lspci | grep -i nvidia` you should see something like:  `0001:00:00.0 3D controller: NVIDIA Corporation GV100GL [Tesla V100 PCIe 16GB] (rev a1)`
-
-
-Additionally, this workspace is setup to fine-tune Hugging Face
-
-![fine-tune](https://user-images.githubusercontent.com/58792/195709866-121f994e-3531-493b-99af-c3266c4e28ea.jpg)
-
-
-`python hugging-face/hf_fine_tune_hello_world.py` 
-
-#### Verify containerized GPU works for Tensorflow
-
-*Because of potential versioning conflicts between PyTorch and Tensorflow it is recommended to run Tensorflow via GPU Container and PyTorch via default environment.* 
-
-See [TensorFlow GPU documentation](https://www.tensorflow.org/install/docker)
-* Run `docker run --gpus all -it --rm tensorflow/tensorflow:latest-gpu \
-   python -c "import tensorflow as tf; print(tf.reduce_sum(tf.random.normal([1000, 1000])))"`
-
-* Also interactively explore:  `docker run --gpus all -it --rm tensorflow/tensorflow:latest-gpu`, then when inside run:
-`apt-get update && apt-get install pciutils` then `lspci | grep -i nvidia`
-
-* To mount the code into your container:  `docker run --gpus all -it --rm -v $(pwd):/tmp tensorflow/tensorflow:latest-gpu /bin/bash`.  Then do `apt-get install -y git && cd /tmp`.  Then all you need to do is run `make install`.  Now you can verify you can train deep learning models by doing `python utils/quickstart_tf2.py`
-
-##### More Tensorflow GPU Ideas
-
-https://www.tensorflow.org/resources/recommendation-systems
+### 一鍵啟動
 
 ```bash
-# Deploy the retrieval model with TensorFlow Serving
-docker run -t --rm -p 8501:8501 \
-  -v "RETRIEVAL/MODEL/PATH:/models/retrieval" \
-  -e MODEL_NAME=retrieval tensorflow/serving &
+# 下載專案
+git clone <your-repo-url>
+cd mlops-template
+
+# 一鍵執行完整 MLOps 流水線
+bash scripts/quickstart.sh
 ```
 
-### Setup Docker Toolkit NVidia
+這將自動：
+1. ✅ 檢查系統需求和安裝 Poetry
+2. 📦 安裝所有依賴（包含 GPU 支援）
+3. 🔧 驗證 GPU 環境
+4. 🏃 訓練 Iris 分類模型
+5. ✅ 驗證模型品質
+6. 🚀 建立和啟動 BentoML 服務
+7. 🧪 執行功能和負載測試
+8. 📊 啟動監控指標
 
-* [reference docs](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#install-guide)
+### 分步驟執行
 
-![mlops-tensorflow-gpu](https://user-images.githubusercontent.com/58792/206875904-114b4cf0-879d-497b-8690-267dac8b222d.jpg)
+```bash
+# 安裝依賴
+make install
 
+# 檢查 GPU 支援
+make checkgpu
 
-### Used in Following Projects
+# 訓練模型
+poetry run python application/training/pipelines/iris_training_pipeline.py
 
-Used as the base and customized in the following Duke MLOps and Applied Data Engineering Coursera Labs:
+# 啟動服務
+make run
+```
 
-* [MLOPs-C2-Lab1-CICD](https://github.com/nogibjj/Coursera-MLOPs-Foundations-Lab-1-CICD)
-* [MLOps-C2-Lab2-PokerSimulator](https://github.com/nogibjj/Coursera-MLOPs-Foundations-Lab-2-poker-simulator)
-* [MLOps-C2-Final-HuggingFace](https://github.com/nogibjj/Coursera-MLOps-C2-Final-HuggingFace)
-* [Coursera-MLOps-C2-lab3-probability-simulations](Coursera-MLOps-C2-lab3-probability-simulations)
-* [Coursera-MLOps-C2-lab4-greedy-optimization](https://github.com/nogibjj/Coursera-MLOps-C2-lab4-greedy-optimization)
-### References
+## 📁 專案架構
 
-* [Docker "one-liners" for Tensorflow recommenders](https://www.tensorflow.org/resources/recommendation-systems)
-* [Watch GitHub Universe Talk:  Teaching MLOps at scale with Github](https://watch.githubuniverse.com/on-demand/ec17cbb3-0a89-4764-90a5-9debb58515f8)
-* [Building Cloud Computing Solutions at Scale Specialization](https://www.coursera.org/specializations/building-cloud-computing-solutions-at-scale)
-* [Python, Bash and SQL Essentials for Data Engineering Specialization](https://www.coursera.org/learn/web-app-command-line-tools-for-data-engineering-duke)
-* [Implementing MLOps in the Enterprise](https://learning.oreilly.com/library/view/implementing-mlops-in/9781098136574/)
-* [Practical MLOps: Operationalizing Machine Learning Models](https://www.amazon.com/Practical-MLOps-Operationalizing-Machine-Learning/dp/1098103017)
-* [Coursera-Dockerfile](https://gist.github.com/noahgift/82a34d56f0a8f347865baaa685d5e98d)
+```
+mlops-template/
+├── 🏢 domain/              # 領域層 - 核心業務邏輯
+│   ├── data/              # 資料管理和處理
+│   ├── models/            # 各種 ML 模型
+│   │   ├── traditional/   # scikit-learn 模型
+│   │   ├── deep_learning/ # PyTorch/TensorFlow 模型
+│   │   ├── generative/    # 生成式 AI (LLM/Whisper)
+│   │   └── specialized/   # 專業領域模型 (NLP/CV)
+│   └── experiments/       # Jupyter 實驗和研究
+├── 🔧 application/         # 應用層 - 業務應用
+│   ├── training/          # 自動化訓練流水線
+│   ├── inference/         # BentoML 推論服務
+│   ├── validation/        # 模型驗證系統
+│   └── registry/          # 模型註冊表和製品管理
+├── 🏗️ infrastructure/      # 基礎設施層
+│   ├── deployment/        # Docker/Kubernetes 部署
+│   ├── monitoring/        # Prometheus/Grafana 監控
+│   └── cicd/             # GitHub Actions CI/CD
+├── 🔄 shared/             # 共享層
+│   ├── utils/            # 通用工具程式庫
+│   └── configs/          # 配置管理
+├── 🧪 tests/              # 測試套件
+├── 📖 examples/           # 範例和教程
+└── 📜 scripts/            # 自動化腳本
+```
+
+## 🎓 學習路徑
+
+### 🔰 初學者路徑
+1. **環境設置** → [快速開始](#快速開始)
+2. **第一個模型** → 運行 Iris 分類範例
+3. **API 使用** → 測試 BentoML 服務
+4. **基礎監控** → 查看 Prometheus 指標
+
+### 🎯 進階路徑
+1. **系統架構** → 閱讀 [系統設計文檔](SYSTEM_DESIGN_RESTRUCTURE.md)
+2. **完整教學** → 跟隨 [MLOps 完整教學](MLOPS_COMPLETE_TUTORIAL.md)
+3. **自定義模型** → 開發您的模型
+4. **部署指南** → [部署與監控指南](DEPLOYMENT_MONITORING_GUIDE.md)
+
+### 🚀 專家路徑
+1. **全流程自動化** → 使用 `scripts/automation/`
+2. **雲端部署** → AWS/GCP/Azure 部署
+3. **CI/CD 整合** → GitHub Actions 工作流
+4. **監控優化** → 進階監控和告警
+
+## 🛠️ 核心功能
+
+### 機器學習模型支援
+
+| 框架 | 位置 | 說明 |
+|------|------|------|
+| **scikit-learn** | `domain/models/traditional/` | 傳統機器學習 |
+| **PyTorch** | `domain/models/deep_learning/pytorch/` | 深度學習 |
+| **TensorFlow** | `domain/models/deep_learning/tensorflow/` | 深度學習 |
+| **Hugging Face** | `domain/models/generative/llm/` | 生成式 AI |
+| **專業模型** | `domain/models/specialized/` | NLP、CV、時間序列 |
+
+### 自動化工具
+
+```bash
+# 完整流水線自動化
+poetry run python scripts/automation/full_mlops_pipeline.py
+
+# 模型驗證
+poetry run python application/validation/model_validation/validate_model.py
+
+# 負載測試
+poetry run python tests/integration/test_load_performance.py
+```
+
+### 監控系統
+
+- **模型指標** - 準確率、延遲、吞吐量
+- **系統監控** - CPU、記憶體、GPU 使用率
+- **業務指標** - 預測分布、資料漂移檢測
+- **告警系統** - Prometheus 規則和通知
+
+## 🌐 API 使用
+
+### 健康檢查
+```bash
+curl http://localhost:3000/health_check
+```
+
+### 單個預測
+```bash
+curl -X POST http://localhost:3000/classify_json \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sepal_length": 5.1,
+    "sepal_width": 3.5,
+    "petal_length": 1.4,
+    "petal_width": 0.2
+  }'
+```
+
+### 批次預測
+```bash
+curl -X POST http://localhost:3000/classify_json \
+  -H "Content-Type: application/json" \
+  -d '{
+    "instances": [
+      {"sepal_length": 5.1, "sepal_width": 3.5, "petal_length": 1.4, "petal_width": 0.2},
+      {"sepal_length": 6.2, "sepal_width": 2.9, "petal_length": 4.3, "petal_width": 1.3}
+    ]
+  }'
+```
+
+## 🐳 部署選項
+
+### 本地部署
+```bash
+make run
+```
+
+### Docker 部署
+```bash
+# 建立容器
+make containerize
+
+# 運行容器
+docker run -p 3000:3000 iris_classifier:latest
+```
+
+### 雲端部署
+```bash
+# AWS ECS
+aws ecs create-service --service-name iris-classifier
+
+# Google Cloud Run
+gcloud run deploy iris-classifier --image gcr.io/project/iris-classifier
+
+# Azure Container Instances
+az container create --name iris-classifier
+```
+
+## 📊 監控儀表板
+
+啟動完整監控棧：
+
+```bash
+docker-compose -f infrastructure/monitoring/docker-compose.yml up -d
+```
+
+訪問監控介面：
+- **服務 API**: http://localhost:3000
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3001 (admin/admin)
+
+## 🧪 測試
+
+### 單元測試
+```bash
+make test
+```
+
+### 整合測試
+```bash
+poetry run python tests/integration/test_load_performance.py
+```
+
+### 程式碼品質
+```bash
+make refactor  # format + lint
+```
+
+## 📚 完整文檔
+
+| 文檔 | 說明 |
+|------|------|
+| [🎓 MLOps 完整教學](MLOPS_COMPLETE_TUTORIAL.md) | 6 章節完整教學 |
+| [🚀 部署與監控指南](DEPLOYMENT_MONITORING_GUIDE.md) | 本地到雲端部署 |
+| [🎯 快速入門指南](GETTING_STARTED.md) | 分層學習路徑 |
+| [🏗️ 系統設計文檔](SYSTEM_DESIGN_RESTRUCTURE.md) | 架構設計原理 |
+| [📦 Poetry 使用指南](POETRY_QUICKSTART.md) | 依賴管理詳解 |
+| [🔄 遷移報告](MIGRATION_TO_POETRY.md) | 從 pip 到 Poetry |
+
+## ⚙️ 系統需求
+
+### 最低需求
+- **Python**: 3.9+
+- **記憶體**: 4GB
+- **硬碟**: 5GB 可用空間
+
+### 建議需求
+- **Python**: 3.9+
+- **記憶體**: 8GB+
+- **硬碟**: 10GB+ 可用空間
+- **GPU**: NVIDIA GPU (CUDA 11.8+) 用於深度學習
+
+### 相依工具
+- **Poetry**: 依賴管理
+- **Docker**: 容器化 (可選)
+- **Git**: 版本控制
+
+## 🔧 故障排除
+
+### 常見問題
+
+#### Poetry 安裝失敗
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+#### GPU 不可用
+```bash
+# 檢查 NVIDIA 驅動
+nvidia-smi
+
+# 重新安裝 GPU 版本
+poetry run pip install torch --index-url https://download.pytorch.org/whl/cu118
+```
+
+#### 埠號衝突
+```bash
+# 使用不同埠號
+poetry run bentoml serve iris_service:IrisClassifier --port 3001
+```
+
+#### 模型載入失敗
+```bash
+# 重新訓練模型
+poetry run python application/training/pipelines/iris_training_pipeline.py
+```
+
+更多故障排除請查看 [部署與監控指南](DEPLOYMENT_MONITORING_GUIDE.md#故障排除)
+
+## 🤝 貢獻
+
+我們歡迎所有形式的貢獻！
+
+1. 🍴 Fork 專案
+2. 🌿 創建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 💾 提交變更 (`git commit -m 'Add AmazingFeature'`)
+4. 📤 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 🔀 開啟 Pull Request
+
+## 📄 授權
+
+本專案採用 MIT 授權 - 查看 [LICENSE](LICENSE) 文件了解詳情
+
+## 🙏 致謝
+
+- [BentoML](https://bentoml.org/) - 模型服務框架
+- [Poetry](https://python-poetry.org/) - Python 依賴管理
+- [MLflow](https://mlflow.org/) - ML 生命週期管理
+- [Prometheus](https://prometheus.io/) - 監控系統
+- [Grafana](https://grafana.com/) - 可視化儀表板
+
+## 📞 支援
+
+- 📖 查看 [文檔](#完整文檔)
+- 🐛 [提交 Issue](../../issues)
+- 💬 [參與討論](../../discussions)
+- 📧 聯繫維護者
+
+---
+
+**⭐ 如果這個專案對您有幫助，請給我們一個 star！**
+
+**🚀 立即開始您的 MLOps 之旅！**

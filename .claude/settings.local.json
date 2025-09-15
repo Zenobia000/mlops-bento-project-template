@@ -6,7 +6,15 @@
       "Bash(bentoml models:*)",
       "Bash(bentoml:*)",
       "Bash(timeout:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(tree:*)",
+      "Bash(for:*)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(ls:*)",
+      "Bash(done)",
+      "Bash(find:*)",
+      "Bash(chmod:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

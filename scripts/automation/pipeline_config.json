@@ -1,0 +1,30 @@
+{
+  "training": {
+    "config_file": "application/training/configs/iris_config.json",
+    "accuracy_threshold": 0.9,
+    "performance_threshold_ms": 100
+  },
+  "validation": {
+    "run_validation": true,
+    "accuracy_threshold": 0.95
+  },
+  "service": {
+    "build_service": true,
+    "run_tests": true,
+    "port": 3000
+  },
+  "deployment": {
+    "environment": "staging",
+    "auto_deploy": false
+  },
+  "monitoring": {
+    "enable_metrics": true,
+    "metrics_port": 8001
+  },
+  "notifications": {
+    "slack_webhook": null,
+    "email_recipients": [],
+    "notify_on_failure": true,
+    "notify_on_success": false
+  }
+}

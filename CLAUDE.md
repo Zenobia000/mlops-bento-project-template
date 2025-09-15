@@ -9,7 +9,9 @@ MLOps Template for GPU-enabled machine learning projects. This template includes
 
 ### Setup & Installation
 ```bash
-make install        # Install dependencies and upgrade pip
+make install        # Install dependencies with Poetry (recommended)
+make install-dev    # Minimal setup: Install basic dev tools with pip
+poetry shell        # Activate Poetry virtual environment
 ```
 
 ### Testing & Quality
@@ -18,15 +20,16 @@ make test          # Run pytest with coverage
 make lint          # Run pylint on Python files
 make format        # Format code with black
 make refactor      # Format and lint together
+make clean         # Clean build artifacts
 ```
 
 ### GPU Verification
 ```bash
 make checkgpu      # Check GPU availability for PyTorch and TensorFlow
 nvidia-smi -l 1    # Monitor GPU usage
-python utils/verify_cuda_pytorch.py    # Test PyTorch CUDA
-python utils/quickstart_pytorch.py     # PyTorch training test
-python utils/quickstart_tf2.py         # TensorFlow training test
+poetry run python shared/utils/gpu_utils/verify_cuda_pytorch.py    # Test PyTorch CUDA
+poetry run python domain/models/deep_learning/pytorch/quickstart_pytorch.py     # PyTorch training test
+poetry run python domain/models/deep_learning/tensorflow/quickstart_tf2.py         # TensorFlow training test
 ```
 
 ### Docker & Containers
@@ -39,37 +42,41 @@ docker run --gpus all -it --rm tensorflow/tensorflow:latest-gpu
 ### ML Tools
 ```bash
 # Zero-shot classification
-python hugging-face/zero_shot_classification.py classify
+poetry run python domain/models/generative/llm/zero_shot_classification.py classify
 
 # Keyword extraction
-python utils/kw_extract.py
+poetry run python domain/models/specialized/nlp/kw_extract.py
 
 # Whisper transcription
-./utils/transcribe-whisper.sh
+bash domain/models/specialized/nlp/transcribe-whisper.sh
 
 # Hugging Face fine-tuning
-python hugging-face/hf_fine_tune_hello_world.py
+poetry run python domain/models/generative/llm/hf_fine_tune_hello_world.py
+
+# BentoML service
+make run           # Start BentoML inference service
 ```
 
-## Project Structure
-- `hugging-face/` - Hugging Face models and utilities
-- `utils/` - Utility scripts for GPU verification and ML tasks
-- `mylib/` - Custom Python library
-- `bentoml/` - BentoML deployment configurations
-- `examples/` - Example scripts and notebooks
-- `.devcontainer/` - Dev container configuration
-- `.github/` - GitHub Actions workflows
+## Project Structure (System Architecture)
+- `domain/` - Domain layer (data, models, experiments)
+- `application/` - Application layer (training, inference, validation)
+- `infrastructure/` - Infrastructure layer (deployment, monitoring, CI/CD)
+- `shared/` - Shared utilities and configurations
+- `tests/` - Test suite
+- `docs/` - Documentation
+- `examples/` - Example scripts and industry cases
+- `.devcontainer/` - Dev container with Poetry support
 
 ## Key Files
-- `requirements.txt` - Python dependencies
-- `tf-requirements.txt` - TensorFlow-specific requirements
-- `Makefile` - Build automation
-- `test_main.py` - Test suite
-- `main.py` - Main application entry point
+- `pyproject.toml` - Poetry configuration and dependencies (replaces requirements.txt)
+- `Makefile` - Build automation with Poetry support
+- `tests/` - Test suite with pytest
+- `.devcontainer/` - VS Code dev container with GPU + Poetry
 
 ## Development Notes
-- Uses pip and virtualenv (no conda required)
-- GPU support for both PyTorch and TensorFlow
+- Uses Poetry for dependency management (pip fallback available)
+- System architecture with clear layer separation (Domain/Application/Infrastructure)
+- GPU support for PyTorch, TensorFlow with CUDA
+- Dev container with Poetry and GPU support
 - CI/CD with GitHub Actions
-- Docker support with GPU access
-- Supports GitHub Codespaces with GPU
+- BentoML for model serving and deployment
