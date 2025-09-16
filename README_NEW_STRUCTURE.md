@@ -144,4 +144,14 @@ docker build -t my-model .
 
 ---
 
+## 📖 延伸閱讀
+
+- 📘 **完整教學**: [MLOPS_COMPLETE_TUTORIAL.md](MLOPS_COMPLETE_TUTORIAL.md)
+- 🏗️ **系統架構**: [SYSTEM_DESIGN_RESTRUCTURE.md](SYSTEM_DESIGN_RESTRUCTURE.md)
+- 🚀 **部署指南**: [DEPLOYMENT_MONITORING_GUIDE.md](DEPLOYMENT_MONITORING_GUIDE.md)
+- 📦 **Poetry 使用**: [POETRY_QUICKSTART.md](POETRY_QUICKSTART.md)
+- 🔧 **故障排除**: [TROUBLESHOOTING_GUIDE.md](TROUBLESHOOTING_GUIDE.md)
+
+---
+
 **這是一個符合現代軟體工程最佳實踐的 MLOps 系統架構！** 🚀

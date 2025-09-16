@@ -6,12 +6,13 @@ from pathlib import Path
 from datetime import datetime
 import joblib
 
-# 添加專案根目錄到路徑
+# Add project root directory to path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.append(str(project_root))
 
 import mlflow
 import mlflow.sklearn
+import bentoml
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -19,14 +20,14 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import numpy as np
 
 class IrisTrainingPipeline:
-    """Iris 分類模型訓練流水線"""
+    """Iris Classification Model Training Pipeline"""
 
     def __init__(self, config_path=None):
         self.config = self.load_config(config_path)
         self.setup_mlflow()
 
     def load_config(self, config_path):
-        """載入訓練配置"""
+        """Load training configuration"""
         default_config = {
             "model": {
                 "n_estimators": 100,
@@ -43,7 +44,7 @@ class IrisTrainingPipeline:
         if config_path and Path(config_path).exists():
             with open(config_path, 'r') as f:
                 config = json.load(f)
-            # 合併配置
+            # Merge configurations
             for key in default_config:
                 if key not in config:
                     config[key] = default_config[key]
@@ -52,12 +53,24 @@ class IrisTrainingPipeline:
         return default_config
 
     def setup_mlflow(self):
-        """設置 MLflow"""
+        """Setup MLflow"""
+        # Set the tracking server URI to connect to the MLflow container
+        mlflow.set_tracking_uri("http://127.0.0.1:5000")
+
+        # Set credentials for the MinIO artifact store
+        os.environ["AWS_ACCESS_KEY_ID"] = "minioadmin"
+        os.environ["AWS_SECRET_ACCESS_KEY"] = "minioadmin"
+        os.environ["MLFLOW_S3_ENDPOINT_URL"] = "http://127.0.0.1:9010"
+
+        print("🔧 MLflow configured:")
+        print(f"   - Tracking URI: {mlflow.get_tracking_uri()}")
+        print(f"   - S3 Endpoint URL: {os.environ.get('MLFLOW_S3_ENDPOINT_URL')}")
+
         mlflow.set_experiment(self.config["experiment_name"])
 
     def load_data(self):
-        """載入和準備數據"""
-        print("📊 載入數據...")
+        """Load and prepare data"""
+        print("📊 Loading data...")
         iris = load_iris()
         X, y = iris.data, iris.target
 
@@ -68,21 +81,21 @@ class IrisTrainingPipeline:
             stratify=y
         )
 
-        print(f"訓練集大小: {X_train.shape}")
-        print(f"測試集大小: {X_test.shape}")
+        print(f"Training set size: {X_train.shape}")
+        print(f"Test set size: {X_test.shape}")
 
         return X_train, X_test, y_train, y_test, iris.target_names
 
     def train_model(self, X_train, y_train):
-        """訓練模型"""
-        print("🔧 訓練模型...")
+        """Train model"""
+        print("🔧 Training model...")
         model = RandomForestClassifier(**self.config["model"])
         model.fit(X_train, y_train)
         return model
 
     def evaluate_model(self, model, X_test, y_test, target_names):
-        """評估模型"""
-        print("📈 評估模型...")
+        """Evaluate model"""
+        print("📈 Evaluating model...")
         y_pred = model.predict(X_test)
 
         accuracy = accuracy_score(y_test, y_pred)
@@ -97,21 +110,21 @@ class IrisTrainingPipeline:
         }
 
     def save_model(self, model, metrics, model_name="iris_classifier"):
-        """儲存模型和指標"""
-        print("💾 儲存模型...")
+        """Save model and metrics"""
+        print("💾 Saving model...")
 
-        # 創建模型目錄
+        # Create model directory
         model_dir = project_root / "application" / "registry" / "model_registry"
         model_dir.mkdir(parents=True, exist_ok=True)
 
-        # 儲存模型
+        # Save model
         model_path = model_dir / f"{model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.joblib"
         joblib.dump(model, model_path)
 
-        # 儲存指標
+        # Save metrics
         metrics_path = model_path.with_suffix('.json')
         with open(metrics_path, 'w') as f:
-            # 將 numpy 數組轉換為列表
+            # Convert numpy arrays to lists
             serializable_metrics = {}
             for key, value in metrics.items():
                 if isinstance(value, np.ndarray):
@@ -122,53 +135,76 @@ class IrisTrainingPipeline:
 
         return str(model_path), str(metrics_path)
 
+    def import_model_to_bentoml(self, model, metrics, model_name="iris_clf"):
+        """Import the trained model into the BentoML model store."""
+        print(f"🍱 Importing model '{model_name}' to BentoML store...")
+
+        # Save the model to the BentoML store
+        bento_model = bentoml.sklearn.save_model(
+            model_name,
+            model,
+            signatures={
+                "predict": {"batchable": True, "batch_dim": 0},
+            },
+            labels={
+                "owner": "mlops-team",
+                "stage": "dev",
+                "accuracy": f"{metrics['accuracy']:.4f}"
+            }
+        )
+        print(f"✅ Model imported to BentoML: {bento_model.tag}")
+        return bento_model
+
     def run_training(self):
-        """執行完整的訓練流水線"""
-        print("🚀 開始 MLOps 訓練流水線...")
+        """Execute complete training pipeline"""
+        print("🚀 Starting MLOps training pipeline...")
 
         with mlflow.start_run(run_name=f"iris_pipeline_{datetime.now().strftime('%Y%m%d_%H%M')}"):
-            # 載入數據
+            # Load data
             X_train, X_test, y_train, y_test, target_names = self.load_data()
 
-            # 記錄參數
+            # Log parameters
             mlflow.log_params(self.config["model"])
             mlflow.log_params(self.config["data"])
 
-            # 訓練模型
+            # Train model
             model = self.train_model(X_train, y_train)
 
-            # 評估模型
+            # Evaluate model
             metrics = self.evaluate_model(model, X_test, y_test, target_names)
 
-            # 記錄指標
+            # Log metrics
             mlflow.log_metric("accuracy", metrics['accuracy'])
             mlflow.log_metric("precision_macro", metrics['classification_report']['macro avg']['precision'])
             mlflow.log_metric("recall_macro", metrics['classification_report']['macro avg']['recall'])
             mlflow.log_metric("f1_macro", metrics['classification_report']['macro avg']['f1-score'])
 
-            # 記錄模型到 MLflow
+            # Log model to MLflow
             mlflow.sklearn.log_model(
                 sk_model=model,
                 artifact_path="model",
                 registered_model_name="iris_classifier_pipeline"
             )
 
-            # 儲存模型到本地
+            # Save model locally
             model_path, metrics_path = self.save_model(model, metrics)
 
-            print("✅ 訓練完成！")
-            print(f"📊 準確率: {metrics['accuracy']:.4f}")
-            print(f"💾 模型儲存位置: {model_path}")
-            print(f"📈 指標儲存位置: {metrics_path}")
+            # Import model to BentoML store
+            self.import_model_to_bentoml(model, metrics)
+
+            print("✅ Training completed!")
+            print(f"📊 Accuracy: {metrics['accuracy']:.4f}")
+            print(f"💾 Model saved to: {model_path}")
+            print(f"📈 Metrics saved to: {metrics_path}")
 
             return model, metrics
 
 def main():
-    parser = argparse.ArgumentParser(description="Iris 分類模型訓練流水線")
-    parser.add_argument("--config", type=str, help="訓練配置文件路徑")
+    parser = argparse.ArgumentParser(description="Iris Classification Model Training Pipeline")
+    parser.add_argument("--config", type=str, help="Training configuration file path")
     args = parser.parse_args()
 
-    # 執行訓練流水線
+    # Execute training pipeline
     pipeline = IrisTrainingPipeline(config_path=args.config)
     model, metrics = pipeline.run_training()
 

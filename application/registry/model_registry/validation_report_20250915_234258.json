@@ -1,0 +1,79 @@
+{
+  "model_file": "application/registry/model_registry/iris_classifier_20250915_234256.joblib",
+  "validation_timestamp": "2025-09-15T23:42:58.688689",
+  "overall_passed": true,
+  "validations": {
+    "accuracy_validation": {
+      "accuracy": 0.9555555555555556,
+      "threshold": 0.9,
+      "passed": true,
+      "classification_report": {
+        "setosa": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 15.0
+        },
+        "versicolor": {
+          "precision": 0.9333333333333333,
+          "recall": 0.9333333333333333,
+          "f1-score": 0.9333333333333333,
+          "support": 15.0
+        },
+        "virginica": {
+          "precision": 0.9333333333333333,
+          "recall": 0.9333333333333333,
+          "f1-score": 0.9333333333333333,
+          "support": 15.0
+        },
+        "accuracy": 0.9555555555555556,
+        "macro avg": {
+          "precision": 0.9555555555555556,
+          "recall": 0.9555555555555556,
+          "f1-score": 0.9555555555555556,
+          "support": 45.0
+        },
+        "weighted avg": {
+          "precision": 0.9555555555555556,
+          "recall": 0.9555555555555556,
+          "f1-score": 0.9555555555555556,
+          "support": 45.0
+        }
+      }
+    },
+    "performance_validation": {
+      "total_time_ms": 3.220081329345703,
+      "avg_time_per_sample_ms": 0.003220081329345703,
+      "samples_tested": 1000,
+      "threshold_ms": 100,
+      "passed": true
+    },
+    "structure_validation": {
+      "model_type": "RandomForestClassifier",
+      "has_predict_method": true,
+      "has_predict_proba_method": true,
+      "feature_importances_available": true,
+      "missing_methods": [],
+      "passed": true
+    },
+    "input_output_validation": {
+      "passed": true,
+      "errors": [],
+      "prediction_shape": [
+        1
+      ],
+      "probabilities_shape": [
+        1,
+        3
+      ],
+      "prediction_dtype": "int64",
+      "probabilities_dtype": "float64"
+    }
+  },
+  "summary": {
+    "accuracy_passed": true,
+    "performance_passed": true,
+    "structure_passed": true,
+    "input_output_passed": true
+  }
+}

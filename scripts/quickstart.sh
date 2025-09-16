@@ -155,8 +155,12 @@ run_mlops_pipeline() {
     print_header "執行 MLOps 流水線"
 
     # 確保目錄存在
+    print_step "創建必要目錄..."
     mkdir -p application/registry/model_registry
     mkdir -p reports
+    mkdir -p domain
+    touch domain/__init__.py
+    print_success "目錄結構已準備"
 
     print_step "步驟 1: 訓練模型..."
     if poetry run python application/training/pipelines/iris_training_pipeline.py --config application/training/configs/iris_config.json; then
@@ -194,8 +198,8 @@ start_services() {
     print_step "啟動 BentoML 推論服務..."
     cd application/inference/services
 
-    # 在背景啟動服務
-    nohup poetry run bentoml serve iris_service:IrisClassifier --port 3000 > ../../../bentoml_service.log 2>&1 &
+    # 在背景啟動服務 (使用無警告版本)
+    nohup PYTHONWARNINGS="ignore" poetry run bentoml serve iris_service.py:svc --port 3000 > ../../../bentoml_service.log 2>&1 &
     BENTOML_PID=$!
     echo $BENTOML_PID > ../../../bentoml.pid
 

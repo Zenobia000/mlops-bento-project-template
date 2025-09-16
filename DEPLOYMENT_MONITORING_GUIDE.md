@@ -48,9 +48,12 @@ make install
 # 2. 訓練模型
 poetry run python application/training/pipelines/iris_training_pipeline.py
 
-# 3. 啟動 BentoML 服務
+# 3. 啟動 BentoML 服務 (推薦使用 Makefile)
+make run
+
+# 或手動啟動 (無警告版本)
 cd application/inference/services
-poetry run bentoml serve iris_service:IrisClassifier --reload --port 3000
+PYTHONWARNINGS="ignore" poetry run bentoml serve iris_service.py:svc --reload --port 3000
 ```
 
 ### 生產環境部署
@@ -618,7 +621,7 @@ netstat -tulpn | grep :3000
 poetry run bentoml list
 
 # 查看詳細錯誤
-poetry run bentoml serve iris_service:IrisClassifier --reload --debug
+poetry run bentoml serve iris_service.py:svc --reload --debug
 ```
 
 #### 3. 性能問題
@@ -645,6 +648,90 @@ curl http://localhost:8001/metrics
 
 # 重啟監控組件
 docker-compose restart prometheus grafana
+```
+
+#### 5. BentoML 特定問題
+
+```bash
+# 檢查 BentoML 版本兼容性
+poetry run bentoml --version
+
+# 常見 API 錯誤修復
+# 錯誤: AttributeError: module 'bentoml' has no attribute 'service'
+# 解決: 改用 @bentoml.Service (大寫 S)
+
+# 錯誤: TypeError: Service.__init__() got an unexpected keyword argument 'resources'
+# 解決: 將 resources 參數移到 @bentoml.api 裝飾器
+
+# 錯誤: Attribute "IrisClassifier" not found in module
+# 解決: 檢查服務實例名稱，使用 iris_service.py:svc
+
+# 抑制警告訊息
+PYTHONWARNINGS="ignore" poetry run bentoml serve iris_service.py:svc --reload
+```
+
+### 6. Makefile 命令問題
+
+```bash
+# 查看所有可用命令
+make help
+
+# 檢查 Poetry 環境
+poetry env info
+
+# 重新安裝依賴
+make clean && make install
+
+# 檢查 GPU 配置
+make checkgpu
+
+# 構建服務包
+make bento-build
+
+# 創建容器
+make containerize
+
+# 啟動服務
+make run
+```
+
+**常見 Makefile 錯誤：**
+
+#### `make install` 失敗
+```bash
+# 檢查 Poetry 鎖定文件
+ls -la poetry.lock
+
+# 重新鎖定依賴
+poetry lock --no-update
+
+# 清理緩存後重新安裝
+poetry cache clear --all pypi
+make install
+```
+
+#### `make run` 服務啟動失敗
+```bash
+# 檢查模型是否已載入
+poetry run bentoml models list
+
+# 檢查服務構建狀態
+make bento-build
+
+# 查看詳細日誌
+tail -f bentoml_service.log
+```
+
+#### `make containerize` 失敗
+```bash
+# 檢查 Docker 是否運行
+docker ps
+
+# 檢查服務是否已構建
+make bento-build
+
+# 查看容器日誌
+docker logs <container_id>
 ```
 
 ### 除錯工具

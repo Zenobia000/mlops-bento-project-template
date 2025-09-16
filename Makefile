@@ -58,7 +58,7 @@ containerize:
 # Run BentoML service locally
 run:
 	@echo "🚀 Starting BentoML service..."
-	cd application/inference/services && poetry run bentoml serve service.py:IrisClassifier --reload
+	cd application/inference/services && PYTHONWARNINGS="ignore" poetry run bentoml serve iris_service.py:svc --reload
 
 # Deploy (placeholder)
 deploy:

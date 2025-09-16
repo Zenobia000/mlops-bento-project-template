@@ -16,6 +16,12 @@ poetry config virtualenvs.create true
 poetry config virtualenvs.in-project false
 poetry config virtualenvs.path ~/.cache/pypoetry/virtualenvs
 
+# Prepare project structure
+echo "📁 Preparing project structure..."
+mkdir -p domain
+touch domain/__init__.py
+echo "✅ Project structure prepared"
+
 # Install dependencies
 echo "📚 Installing project dependencies..."
 if [ -f "pyproject.toml" ]; then

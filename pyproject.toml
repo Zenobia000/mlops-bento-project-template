@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "shared"}, {include = "domain"}, {include = "application"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 # Core dependencies
 wheel = "^0.37.1"
 click = "^8.1.3"

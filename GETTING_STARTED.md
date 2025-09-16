@@ -5,25 +5,42 @@
 ### 一鍵執行完整流程
 
 ```bash
-# Linux/Mac 用戶
+# 推薦：一鍵執行完整流水線 (包含所有修復)
 bash scripts/quickstart.sh
 
-# Windows 用戶 (Git Bash 或 WSL)
-bash scripts/quickstart.sh
+# 或分步驟執行：
+# 步驟 1: 安裝依賴
+make install
+
+# 步驟 2: 檢查 GPU
+make checkgpu
+
+# 步驟 3: 訓練模型
+poetry run python application/training/pipelines/iris_training_pipeline.py
+
+# 步驟 4: 啟動服務 (無警告版本)
+make run
 
 # 或使用 Python 腳本
 poetry run python scripts/automation/full_mlops_pipeline.py
 ```
 
-這個指令將自動：
-1. ✅ 檢查系統需求
-2. 📦 安裝所有依賴
-3. 🔧 驗證 GPU 環境
-4. 🏃 訓練 Iris 分類模型
-5. ✅ 驗證模型品質
-6. 🚀 建立 BentoML 服務
-7. 🧪 執行功能和負載測試
-8. 📊 啟動監控指標
+這個指令將自動執行完整的 MLOps 流水線：
+1. ✅ 檢查系統需求和依賴
+2. 📦 安裝 Poetry 和所有依賴項
+3. 🔧 驗證 GPU 環境和 CUDA 支持
+4. 📁 創建必要的專案目錄結構
+5. 🏃 訓練 Iris 分類模型 (包含 MLflow 追蹤)
+6. ✅ 驗證模型品質和效能指標
+7. 🚀 建立 BentoML 服務 (使用最新 API)
+8. 🧪 執行功能測試和負載測試
+9. 📊 啟動監控指標和健康檢查
+
+**💡 為什麼推薦使用 quickstart.sh？**
+- 自動修復常見問題 (domain 目錄、API 兼容性等)
+- 使用無警告版本啟動服務
+- 完整的錯誤處理和清理機制
+- 一步到位，無需手動處理每個步驟
 
 ### 分步驟執行
 
@@ -152,10 +169,34 @@ poetry run python domain/models/traditional/sklearn/quickstart.py
 # 完整流水線
 poetry run python scripts/automation/full_mlops_pipeline.py
 
+# 啟動 BentoML 服務 (無警告)
+make run
+
 # 容器化部署
 make containerize
 docker run -p 3000:3000 iris_classifier:latest
 ```
+
+### BentoML 服務啟動指南
+
+#### 正確的服務啟動方式
+```bash
+# 方式 1: 使用 Makefile (推薦)
+make run
+
+# 方式 2: 手動啟動 (無警告版本)
+cd application/inference/services
+PYTHONWARNINGS="ignore" poetry run bentoml serve iris_service.py:svc --reload
+
+# 方式 3: 使用 bentofile.yaml
+cd application/inference/services
+poetry run bentoml serve . --reload
+```
+
+#### 常見問題解決
+- **警告訊息**: 使用 `PYTHONWARNINGS="ignore"` 環境變數
+- **API 錯誤**: 確保使用 `@bentoml.Service` 而非 `@bentoml.service`
+- **模型載入**: 使用 `bentoml.sklearn.get("model_name:latest").to_runner()`
 
 ### 場景 3: 持續整合
 ```bash
@@ -207,7 +248,20 @@ nvidia-smi
 netstat -tulpn | grep :3000
 
 # 使用不同埠號
-poetry run bentoml serve iris_service:IrisClassifier --port 3001
+poetry run bentoml serve iris_service.py:svc --port 3001 --reload
+```
+
+#### 問題 4: BentoML API 兼容性
+```bash
+# 檢查 BentoML 版本
+poetry run bentoml --version
+
+# 常見錯誤修復
+# 錯誤: AttributeError: module 'bentoml' has no attribute 'service'
+# 解決: 使用 @bentoml.Service 而非 @bentoml.service
+
+# 錯誤: TypeError: Service.__init__() got an unexpected keyword argument 'resources'
+# 解決: 將 resources 參數移到 @bentoml.api 裝飾器
 ```
 
 #### 問題 4: 模型載入失敗
@@ -218,6 +272,214 @@ ls -la application/registry/model_registry/
 # 重新訓練
 poetry run python application/training/pipelines/iris_training_pipeline.py
 ```
+
+## 🔧 Makefile 命令完整參考
+
+### 設置與安裝
+
+#### `make install` - 安裝所有依賴 (推薦)
+```bash
+make install
+```
+- 安裝 Poetry 依賴項
+- 配置 GPU 支持 (PyTorch, TensorFlow)
+- 安裝 OpenAI Whisper
+- **適用場景**: 完整開發環境設置
+
+#### `make install-dev` - 開發工具安裝 (最小化)
+```bash
+make install-dev
+```
+- 安裝基本開發工具 (black, pylint, pytest, jupyter)
+- **適用場景**: 快速開發環境設置
+
+### 開發工作流
+
+#### `make refactor` - 代碼重構 (格式化 + 檢查)
+```bash
+make refactor
+```
+- 運行 `make format` 和 `make lint`
+- **適用場景**: 代碼質量改進
+
+#### `make format` - 代碼格式化
+```bash
+make format
+```
+- 使用 Black 格式化代碼
+- **適用場景**: 統一代碼風格
+
+#### `make lint` - 代碼檢查
+```bash
+make lint
+```
+- 使用 Pylint 檢查代碼品質
+- **適用場景**: 代碼質量檢查
+
+#### `make test` - 運行測試
+```bash
+make test
+```
+- 運行 pytest 測試套件
+- 生成覆蓋率報告
+- **適用場景**: 驗證代碼功能
+
+#### `make clean` - 清理構建文件
+```bash
+make clean
+```
+- 刪除 `__pycache__` 目錄
+- 清理 `.pyc` 文件
+- 移除 `dist/`, `build/` 目錄
+- **適用場景**: 清理開發環境
+
+### ML 與 GPU
+
+#### `make checkgpu` - GPU 環境檢查
+```bash
+make checkgpu
+```
+- 驗證 PyTorch CUDA 支持
+- 檢查 TensorFlow GPU 支持
+- **適用場景**: GPU 配置驗證
+
+#### `make train` - 訓練模型
+```bash
+make train
+```
+- 運行模型訓練流水線
+- **適用場景**: 模型訓練
+
+### 部署與服務
+
+#### `make bento-build` - 構建 BentoML 服務
+```bash
+make bento-build
+```
+- **功能**: 根據 `bentofile.yaml` 構建完整的 BentoML 服務包
+- **輸入**: 從 BentoML store 載入已訓練的模型
+- **輸出**: 生成可部署的 BentoML 服務包
+- **適用場景**: 生產環境服務準備
+
+**📋 詳細流程說明：**
+
+1. **讀取配置**: 解析 `bentofile.yaml` 中的服務配置
+2. **打包模型**: 從 BentoML store 載入已訓練的模型 (`iris_clf:latest`)
+3. **打包代碼**: 包含所有必要的 Python 文件和依賴
+4. **創建環境**: 設置 Python 環境和系統依賴
+5. **生成服務**: 創建可執行的 BentoML 服務包
+
+**🔗 與其他命令的關係：**
+- **前置條件**: 需要先運行 `poetry run python application/training/pipelines/iris_training_pipeline.py`
+- **後續步驟**: 可使用 `make containerize` 進一步容器化
+
+#### `make containerize` - 容器化服務
+```bash
+make containerize
+```
+- 創建 Docker 容器
+- **適用場景**: 生產部署準備
+
+#### `make run` - 啟動本地服務 (無警告)
+```bash
+make run
+```
+- 啟動 BentoML 服務 (已包含警告抑制)
+- **適用場景**: 本地開發測試
+
+#### `make deploy` - 部署服務
+```bash
+make deploy
+```
+- 部署到生產環境 (需配置)
+- **適用場景**: 生產部署
+
+### 綜合命令
+
+#### `make all` - 完整流水線
+```bash
+make all
+```
+- 運行: install → format → lint → test → checkgpu
+- **適用場景**: 完整環境設置和驗證
+
+#### `make help` - 顯示幫助 (默認)
+```bash
+make help  # 或只輸入 make
+```
+- 顯示所有可用命令說明
+- **適用場景**: 查看命令幫助
+
+## 🚀 完整 MLOps 流程：從模型到 API
+
+### 階段 1：模型訓練與保存
+```bash
+# 訓練模型並保存到 BentoML store
+poetry run python application/training/pipelines/iris_training_pipeline.py
+```
+**輸出**:
+- MLflow 實驗記錄
+- 本地模型文件 (`application/registry/model_registry/`)
+- BentoML 模型 (`iris_clf:latest`)
+
+### 階段 2：服務開發
+```python
+# application/inference/services/iris_service.py
+iris_model_runner = bentoml.sklearn.get("iris_clf:latest").to_runner()
+
+svc = bentoml.Service(
+    name="iris_classifier",
+    runners=[iris_model_runner],
+)
+
+@svc.api(input=NumpyNdarray(), output=NumpyNdarray())
+async def classify(input_series: np.ndarray) -> np.ndarray:
+    return await iris_model_runner.predict.async_run(input_series)
+```
+
+### 階段 3：服務構建 (`bento build`)
+```bash
+# 根據 bentofile.yaml 構建服務包
+make bento-build
+```
+**輸入**:
+- `bentofile.yaml` (服務配置)
+- BentoML store 中的模型
+- 服務代碼文件
+
+**輸出**:
+- BentoML 服務包 (包含模型、代碼、依賴、環境配置)
+
+### 階段 4：容器化部署
+```bash
+# 可選：創建 Docker 容器
+make containerize
+```
+
+### 階段 5：服務啟動
+```bash
+# 啟動生產服務
+make run
+
+# 或手動啟動
+PYTHONWARNINGS="ignore" poetry run bentoml serve iris_service.py:svc --reload
+```
+
+### 📊 數據流圖
+```
+原始數據 → 模型訓練 → BentoML Store → 服務構建 → API 服務
+    ↓         ↓         ↓            ↓         ↓
+  CSV文件 → Scikit-learn → iris_clf:latest → bento build → http://localhost:3000
+```
+
+### 🔗 關鍵文件
+- **訓練**: `application/training/pipelines/iris_training_pipeline.py`
+- **模型載入**: `application/inference/services/iris_service.py`
+- **服務配置**: `application/inference/services/bentofile.yaml`
+- **構建命令**: `make bento-build`
+
+**💡 `bento build` 的作用**:
+`bento build` 是將訓練好的模型和服務代碼打包成可部署的生產服務包的關鍵步驟。它解決了從開發環境到生產環境的遷移問題，確保服務可以在任何環境中一致運行。
 
 ## 📖 延伸閱讀
 

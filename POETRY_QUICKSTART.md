@@ -23,6 +23,13 @@ pip install poetry
 ### 1. 開發環境設置
 
 ```bash
+# 推薦：一鍵設置 (自動處理所有問題)
+bash scripts/quickstart.sh --install-only
+
+# 或使用專門的 Poetry 設置腳本
+bash scripts/setup/setup_poetry.sh
+
+# 或手動設置：
 # 複製專案後，安裝所有依賴
 make install
 
@@ -39,11 +46,18 @@ make checkgpu
 ### 2. 日常開發工作流
 
 ```bash
-# 格式化和檢查代碼
+# 格式化和檢查代碼 (推薦)
 make refactor
+
+# 或分步執行
+make format    # 代碼格式化
+make lint      # 代碼檢查
 
 # 運行測試
 make test
+
+# 清理構建文件
+make clean
 
 # 添加新依賴
 poetry add numpy pandas
@@ -71,8 +85,11 @@ jupyter lab iris_classifier.ipynb
 # 運行 Hugging Face 範例
 poetry run python domain/models/generative/llm/zero_shot_classification.py classify
 
-# 運行 BentoML 服務
+# 運行 BentoML 服務 (無警告版本)
 make run
+
+# 或完整流水線
+make all        # 安裝 + 格式化 + 檢查 + 測試 + GPU 檢查
 ```
 
 ## 📋 Poetry 常用命令

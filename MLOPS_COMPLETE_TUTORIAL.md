@@ -27,23 +27,36 @@ graph LR
 
 ## 🛠️ 1.1 開發環境準備
 
-### 步驟 1：複製和設置專案
+### 步驟 1：一鍵設置專案 (推薦)
 ```bash
 # 複製專案
 git clone <your-repo>
 cd mlops-template
 
+# 一鍵執行完整設置 (包含所有修復)
+bash scripts/quickstart.sh
+
+# 或者只安裝依賴
+bash scripts/quickstart.sh --install-only
+```
+
+### 步驟 2：手動設置 (如需自定義)
+```bash
 # 檢查 Poetry 是否安裝
 poetry --version
 
-# 安裝所有依賴
-make install
+# 使用專門的 Poetry 設置腳本
+bash scripts/setup/setup_poetry.sh
+
+# 或手動安裝依賴
+make install    # 推薦：完整安裝
+make install-dev  # 或：最小化安裝 (僅開發工具)
 
 # 驗證 GPU 設置
 make checkgpu
 ```
 
-### 步驟 2：開發容器設置
+### 步驟 3：開發容器設置 (可選)
 ```bash
 # VS Code 用戶
 # 1. 打開 Command Palette (Ctrl+Shift+P)
@@ -432,18 +445,17 @@ class IrisFeatures(BaseModel):
 class IrisBatch(BaseModel):
     instances: List[IrisFeatures]
 
-# 載入已訓練的模型
-iris_model_ref = bentoml.sklearn.get("iris_classifier_pipeline:latest")
+# 載入已訓練的模型 (使用新的 runner 模式)
+iris_model_runner = bentoml.sklearn.get("iris_classifier_pipeline:latest").to_runner()
 
-@bentoml.service(
-    resources={"cpu": "2"},
-    traffic={"timeout": 20},
+@bentoml.Service(
+    name="iris_classifier",
+    runners=[iris_model_runner],
 )
 class IrisClassifier:
     """Iris 花朵分類服務"""
 
     def __init__(self):
-        self.model = iris_model_ref.load_model()
         self.class_names = ["setosa", "versicolor", "virginica"]
 
     @bentoml.api
@@ -462,9 +474,9 @@ class IrisClassifier:
         if input_data.ndim == 1:
             input_data = input_data.reshape(1, -1)
 
-        # 預測
-        predictions = self.model.predict(input_data)
-        probabilities = self.model.predict_proba(input_data)
+        # 預測 (使用 runner 模式)
+        predictions = iris_model_runner.predict.run(input_data)
+        probabilities = iris_model_runner.predict_proba.run(input_data)
 
         results = []
         for i, (pred, prob) in enumerate(zip(predictions, probabilities)):
@@ -661,7 +673,7 @@ def test_health_check():
 
 if __name__ == "__main__":
     print("🚀 開始測試 Iris 分類服務...")
-    print("請確保服務正在運行: poetry run bentoml serve iris_service:IrisClassifier --reload")
+    print("請確保服務正在運行: poetry run bentoml serve iris_service.py:IrisClassifier --reload")
     print("-" * 60)
 
     test_health_check()
@@ -1477,6 +1489,403 @@ class IrisClassifier:
             return {"status": "error", "message": f"Missing field: {str(e)}"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
+```
+
+---
+
+# 第六章：BentoML 最佳實踐與常見問題
+
+## 🚀 6.1 BentoML 版本兼容性
+
+### 重要：API 變化說明
+
+BentoML 在版本更新中有重大 API 變化，以下是關鍵差異：
+
+#### 舊版本 (不推薦)
+```python
+import bentoml
+from bentoml.io import NumpyNdarray
+
+# 舊的服務定義方式
+@bentoml.service(
+    resources={"cpu": "2"},
+    traffic={"timeout": 20},
+)
+class MyService:
+    def __init__(self):
+        self.model = bentoml.sklearn.get("model:latest").load_model()
+    
+    @bentoml.api
+    def predict(self, input_data: NumpyNdarray):
+        return self.model.predict(input_data)
+```
+
+#### 新版本 (推薦)
+```python
+import bentoml
+from bentoml.io import NumpyNdarray
+
+# 新的服務定義方式
+iris_model_runner = bentoml.sklearn.get("iris_clf:latest").to_runner()
+
+@bentoml.Service(
+    name="iris_classifier",
+    runners=[iris_model_runner],
+)
+class MyService:
+    def __init__(self):
+        self.class_names = ["setosa", "versicolor", "virginica"]
+    
+    @bentoml.api
+    def predict(self, input_data: NumpyNdarray):
+        predictions = iris_model_runner.predict.run(input_data)
+        probabilities = iris_model_runner.predict_proba.run(input_data)
+        return {"predictions": predictions, "probabilities": probabilities}
+```
+
+### 6.2 服務啟動最佳實踐
+
+#### 正確的啟動命令
+```bash
+# 方式 1: 指定檔案和服務實例 (推薦)
+poetry run bentoml serve iris_service.py:svc --reload
+
+# 方式 2: 使用 bentofile.yaml
+poetry run bentoml serve . --reload
+
+# 方式 3: 抑制警告 (生產環境)
+PYTHONWARNINGS="ignore" poetry run bentoml serve iris_service.py:svc --reload
+```
+
+#### 常見啟動錯誤與解決方案
+
+| 錯誤訊息 | 原因 | 解決方案 |
+|---------|------|---------|
+| `AttributeError: module 'bentoml' has no attribute 'service'` | 使用了舊的 API | 改用 `@bentoml.Service` |
+| `TypeError: Service.__init__() got an unexpected keyword argument 'resources'` | 參數位置錯誤 | 將 `resources` 移到 `@bentoml.api` |
+| `Attribute "IrisClassifier" not found in module` | 服務實例名稱錯誤 | 檢查服務實例名稱，通常是 `svc` |
+| `UserWarning: pkg_resources is deprecated` | 第三方依賴警告 | 使用 `PYTHONWARNINGS="ignore"` |
+
+### 6.3 模型管理最佳實踐
+
+#### 模型註冊到 BentoML
+```python
+import bentoml
+from sklearn.ensemble import RandomForestClassifier
+
+# 訓練模型
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
+
+# 保存到 BentoML 模型庫
+bento_model = bentoml.sklearn.save_model(
+    "iris_clf",  # 模型名稱
+    model,       # 模型物件
+    signatures={
+        "predict": {"batchable": True, "batch_dim": 0},
+    },
+    labels={
+        "owner": "mlops-team",
+        "stage": "dev",
+        "accuracy": f"{accuracy:.4f}"
+    }
+)
+print(f"模型已保存: {bento_model.tag}")
+```
+
+#### 模型載入和使用
+```python
+# 載入模型並創建 runner
+model_runner = bentoml.sklearn.get("iris_clf:latest").to_runner()
+
+# 在服務中使用
+@bentoml.Service(
+    name="iris_service",
+    runners=[model_runner],
+)
+class IrisService:
+    @bentoml.api
+    def predict(self, input_data):
+        return model_runner.predict.run(input_data)
+```
+
+### 6.4 除錯技巧
+
+#### 檢查 BentoML 模型庫
+```bash
+# 列出所有模型
+poetry run bentoml models list
+
+# 查看特定模型詳情
+poetry run bentoml models get iris_clf:latest
+
+# 檢查服務狀態
+poetry run bentoml services list
+```
+
+#### 測試服務
+```bash
+# 健康檢查
+curl http://localhost:3000/health_check
+
+# 測試預測
+curl -X POST http://localhost:3000/classify \
+  -H "Content-Type: application/json" \
+  -d '[[5.1, 3.5, 1.4, 0.2]]'
+```
+
+---
+
+# 第七章：Makefile 命令參考指南
+
+## 🚀 7.1 Makefile 命令總覽
+
+本專案提供了完整的 Makefile 來簡化開發流程。以下是所有可用命令的詳細說明：
+
+### 環境設置命令
+
+#### `make install` - 完整依賴安裝 (推薦)
+```bash
+make install
+```
+**功能**:
+- 安裝 Poetry 所有依賴項
+- 配置 PyTorch CUDA 支持
+- 安裝 TensorFlow GPU 支持
+- 安裝 OpenAI Whisper
+**適用場景**: 完整開發環境設置
+
+#### `make install-dev` - 最小化開發工具安裝
+```bash
+make install-dev
+```
+**功能**:
+- 安裝基本開發工具 (black, pylint, pytest, jupyter)
+- 跳過大型 ML 依賴項
+**適用場景**: 快速設置或 CI 環境
+
+### 開發工作流命令
+
+#### `make refactor` - 代碼重構 (推薦)
+```bash
+make refactor
+```
+**功能**: 同時運行格式化和代碼檢查
+- 等同於: `make format && make lint`
+**適用場景**: 代碼提交前的品質檢查
+
+#### `make format` - 代碼格式化
+```bash
+make format
+```
+**功能**: 使用 Black 統一代碼格式
+**適用場景**: 統一代碼風格
+
+#### `make lint` - 代碼品質檢查
+```bash
+make lint
+```
+**功能**: 使用 Pylint 檢查代碼品質
+**適用場景**: 識別代碼問題和改進點
+
+#### `make test` - 運行測試套件
+```bash
+make test
+```
+**功能**:
+- 運行所有 pytest 測試
+- 生成覆蓋率報告
+- 測試範圍: shared/, domain/, application/
+**適用場景**: 驗證代碼功能正確性
+
+#### `make clean` - 清理構建文件
+```bash
+make clean
+```
+**功能**:
+- 刪除 `__pycache__` 目錄
+- 清理 `.pyc` 文件
+- 移除 `dist/`, `build/`, `.coverage` 文件
+**適用場景**: 清理開發環境或準備發佈
+
+### ML 與 GPU 命令
+
+#### `make checkgpu` - GPU 環境驗證
+```bash
+make checkgpu
+```
+**功能**:
+- 驗證 PyTorch CUDA 支持
+- 檢查 TensorFlow GPU 支持
+- 顯示 GPU 詳細資訊
+**適用場景**: GPU 配置驗證和故障排除
+
+#### `make train` - 模型訓練
+```bash
+make train
+```
+**功能**: 運行模型訓練流水線
+**適用場景**: 模型訓練和實驗
+
+### 部署與服務命令
+
+#### `make bento-build` - 構建 BentoML 服務
+```bash
+make bento-build
+```
+**功能**:
+- 根據 `bentofile.yaml` 構建完整的 BentoML 服務包
+- 打包模型、代碼、依賴和環境配置
+- 生成生產就緒的服務 artifacts
+**適用場景**: 生產環境準備和部署
+
+**🔍 詳細工作流程**:
+
+1. **讀取配置**: 解析 `bentofile.yaml` 中的服務定義
+   ```yaml
+   service: "iris_service:IrisClassifier"
+   include:
+     - "iris_service.py"
+   python:
+     packages:
+       - scikit-learn
+       - numpy
+   ```
+
+2. **模型打包**: 從 BentoML store 載入已訓練的模型
+   ```python
+   # 從訓練腳本保存的模型
+   iris_model_runner = bentoml.sklearn.get("iris_clf:latest").to_runner()
+   ```
+
+3. **依賴分析**: 自動檢測和打包所有必要的 Python 包
+
+4. **環境封裝**: 創建隔離的 Python 環境
+
+5. **服務構建**: 生成包含所有組件的可執行服務包
+
+**📦 輸出結果**:
+- BentoML 服務包 (包含模型二進制文件)
+- 服務元數據和配置
+- Python 環境快照
+- Docker 構建配置 (如果需要)
+
+**⚠️ 前置條件**:
+- 必須先運行模型訓練腳本保存模型到 BentoML store
+- 需要正確的 `bentofile.yaml` 配置
+- 所有依賴必須可用
+
+#### `make containerize` - 容器化服務
+```bash
+make containerize
+```
+**功能**: 創建 Docker 容器映像
+**適用場景**: 容器化部署準備
+
+#### `make run` - 啟動本地服務 (無警告)
+```bash
+make run
+```
+**功能**:
+- 啟動 BentoML 服務
+- 已包含 `PYTHONWARNINGS="ignore"` 來抑制警告
+- 支持 `--reload` 熱重載
+**適用場景**: 本地開發和測試
+
+#### `make deploy` - 部署服務
+```bash
+make deploy
+```
+**功能**: 部署到生產環境 (目前為佔位符)
+**適用場景**: 生產環境部署
+
+### 綜合命令
+
+#### `make all` - 完整開發流水線
+```bash
+make all
+```
+**執行順序**: `install` → `format` → `lint` → `test` → `checkgpu`
+**適用場景**: 完整環境設置和驗證
+
+#### `make help` - 顯示幫助 (默認命令)
+```bash
+make help  # 或只輸入: make
+```
+**功能**: 顯示所有可用命令說明
+**適用場景**: 查看命令幫助
+
+## 7.2 常見使用模式
+
+### 初次設置
+```bash
+# 完整環境設置
+make install && make checkgpu
+
+# 驗證設置
+make all
+```
+
+### 日常開發
+```bash
+# 代碼改進
+make refactor
+
+# 功能測試
+make test
+
+# 清理環境
+make clean
+```
+
+### 生產部署
+```bash
+# 構建服務
+make bento-build
+
+# 容器化
+make containerize
+
+# 本地測試
+make run
+```
+
+### CI/CD 流水線
+```bash
+# 自動化檢查
+make format && make lint && make test
+```
+
+## 7.3 故障排除
+
+### 命令執行失敗
+```bash
+# 查看詳細幫助
+make help
+
+# 檢查 Poetry 環境
+poetry env info
+
+# 重新安裝依賴
+make clean && make install
+```
+
+### GPU 相關問題
+```bash
+# 檢查 GPU 支持
+make checkgpu
+
+# 驗證 CUDA 安裝
+nvidia-smi
+```
+
+### 服務啟動問題
+```bash
+# 檢查服務狀態
+poetry run bentoml list
+
+# 查看服務日誌
+tail -f bentoml_service.log
 ```
 
 ---
